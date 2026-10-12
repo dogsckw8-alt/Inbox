@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅遊景點快速收集器</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #333; font-size: 22px; text-align: center; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; color: #555; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; margin-top: 25px; padding: 14px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:active { background: #0056b3; }
+        #msg { margin-top: 15px; text-align: center; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🗺️ 旅遊景點收集器</h2>
+        <form id="scrapForm">
+            <label>來源平台：</label>
+            <select id="source">
+                <option value="Google Maps">Google Maps</option>
+                <option value="Tabelog">Tabelog</option>
+                <option value="YouTube / Blog">YouTube / 部落格</option>
+                <option value="其他">其他</option>
+            </select>
+
+            <label>店名 / 景點名稱：</label>
+            <input type="text" id="name" placeholder="例如：燒肉亭 六歌仙" required>
+
+            <label>網址 URL：</label>
+            <input type="url" id="scrap-url" placeholder="貼上店家網址..." required>
+
+            <button type="submit" id="submitBtn">送出到 Inbox</button>
+        </form>
+        <div id="msg"></div>
+    </div>
+
+    <script>
+        // 🔑 請將下方引號內換成你剛剛部署好的 GAS Web App URL
+        const GAS_URL = "你的_GAS_WEB_APP_URL_貼在這裡";
+
+        document.getElementById('scrapForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('msg');
+            
+            btn.disabled = true;
+            btn.innerText = "傳送中...";
+            msg.style.color = "#666";
+            msg.innerText = "正在寫入 Google Sheets...";
+
+            const payload = {
+                source: document.getElementById('source').value,
+                name: document.getElementById('name').value,
+                url: document.getElementById('scrap-url').value
+            };
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    msg.style.color = "green";
+                    msg.innerText = "✅ " + result.message;
+                    document.getElementById('name').value = '';
+                    document.getElementById('scrap-url').value = '';
+                } else {
+                    msg.style.color = "red";
+                    msg.innerText = "❌ 失敗：" + result.message;
+                }
+            } catch (err) {
+                msg.style.color = "red";
+                msg.innerText = "❌ 網路錯誤 (CORS/URL錯誤)：" + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "送出到 Inbox";
+            }
+        };
+    </script>
+</body>
+</html>
