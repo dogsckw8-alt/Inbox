@@ -39,7 +39,7 @@
     </div>
 
     <script>
-        // 🔑 請將下方引號內換成你剛剛部署好的 GAS Web App URL
+        // 🔑 請將下方引號內換成你部署好的 GAS Web App URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzeyxhfqpJAx7mnpBmQty7OBfSFPNVogol9AD0ert00ya0YfEEO16GE4pJNu_6W_wWD/exec";
 
         document.getElementById('scrapForm').onsubmit = async function(e) {
@@ -52,16 +52,16 @@
             msg.style.color = "#666";
             msg.innerText = "正在寫入 Google Sheets...";
 
-            const payload = {
-                source: document.getElementById('source').value,
-                name: document.getElementById('name').value,
-                url: document.getElementById('scrap-url').value
-            };
+            // 使用 URLSearchParams 包裝成標準表單格式，完美解決 GAS 接收問題
+            const formData = new URLSearchParams();
+            formData.append('source', document.getElementById('source').value);
+            formData.append('name', document.getElementById('name').value);
+            formData.append('url', document.getElementById('scrap-url').value);
 
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify(payload)
+                    body: formData
                 });
                 const result = await response.json();
                 
@@ -76,7 +76,7 @@
                 }
             } catch (err) {
                 msg.style.color = "red";
-                msg.innerText = "❌ 網路錯誤 (CORS/URL錯誤)：" + err.message;
+                msg.innerText = "❌ 網路錯誤：" + err.message;
             } finally {
                 btn.disabled = false;
                 btn.innerText = "送出到 Inbox";
